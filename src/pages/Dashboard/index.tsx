@@ -43,6 +43,11 @@ interface Category {
   image_url: string;
 }
 
+interface GetFoodsParams {
+  category_like?: number;
+  name_like?: string;
+}
+
 const Dashboard: React.FC = () => {
   const [foods, setFoods] = useState<Food[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -60,38 +65,67 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     async function loadFoods(): Promise<void> {
-      // Load Foods from API
+      const params = {} as GetFoodsParams;
+
+      if (searchValue) {
+        params.name_like = searchValue;
+      }
 
       if (selectedCategory) {
-        api
-          .get<Food[]>(`/foods?category_like=${selectedCategory}`)
-          .then(response => {
-            const formattedFood = response.data.map(food => {
-              return { ...food, formattedPrice: formatValue(food.price) };
-            });
-            setFoods(formattedFood);
-          });
-      } else if (searchValue) {
-        api.get<Food[]>(`/foods?name_like=${searchValue}`).then(response => {
-          if (response.data) {
-            const formattedFood = response.data.map(food => {
-              return { ...food, formattedPrice: formatValue(food.price) };
-            });
-            setFoods(formattedFood);
-          }
-        });
-      } else {
-        api.get<Food[]>('/foods').then(response => {
-          const formattedFood = response.data.map(food => {
-            return { ...food, formattedPrice: formatValue(food.price) };
-          });
-          setFoods(formattedFood);
-        });
+        params.category_like = selectedCategory;
       }
+
+      const response = await api.get<Food[]>('/foods', {
+        params,
+      });
+
+      const foodsFormatted = response.data.map(food => {
+        return {
+          ...food,
+          formattedPrice: formatValue(food.price),
+        };
+      });
+
+      setFoods(foodsFormatted);
     }
 
     loadFoods();
   }, [selectedCategory, searchValue]);
+
+  // useEffect(() => {
+  //   async function loadFoods(): Promise<void> {
+  //     // Load Foods from API
+
+  //     if (selectedCategory) {
+  //       api
+  //         .get<Food[]>(`/foods?category_like=${selectedCategory}`)
+  //         .then(response => {
+  //           const formattedFood = response.data.map(food => {
+  //             return { ...food, formattedPrice: formatValue(food.price) };
+  //           });
+  //           setFoods(formattedFood);
+  //         });
+  //     } else if (searchValue) {
+  //       api.get<Food[]>(`/foods?name_like=${searchValue}`).then(response => {
+  //         if (response.data) {
+  //           const formattedFood = response.data.map(food => {
+  //             return { ...food, formattedPrice: formatValue(food.price) };
+  //           });
+  //           setFoods(formattedFood);
+  //         }
+  //       });
+  //     } else {
+  //       api.get<Food[]>('/foods').then(response => {
+  //         const formattedFood = response.data.map(food => {
+  //           return { ...food, formattedPrice: formatValue(food.price) };
+  //         });
+  //         setFoods(formattedFood);
+  //       });
+  //     }
+  //   }
+
+  //   loadFoods();
+  // }, [selectedCategory, searchValue]);
 
   useEffect(() => {
     async function loadCategories(): Promise<void> {
